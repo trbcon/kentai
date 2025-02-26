@@ -3,6 +3,28 @@
 #include <FastLED.h>
 #include <ESP8266WiFi.h>
 #include "GyverButton.h"
+#include <IRremote.h>
+
+
+const int IR_LED_PIN = 3; // Пин для ИК-светодиода
+IRsend irsend;
+
+
+unsigned long powerCodes[] = {
+    0x20DF10EF, // LG
+    0xE0E040BF, // Samsung
+    0xA90,      // Sony
+    0x20DF8877, // Panasonic
+    0x20DFD02F, // Philips
+    0x20DF13EC, // Toshiba
+    0x20DF1EE1  // Sharp
+};
+
+const int numCodes = sizeof(powerCodes) / sizeof(powerCodes[0]);
+const long intervalIR = 500;
+int currentCodeIndex = 0;
+unsigned long previousMillisIR = 0;
+
 
 GButton up;
 GButton ok;
@@ -36,6 +58,8 @@ bool redLED = false;
 bool oscilloscope = false;
 
 bool WiFiSpam = false;
+
+bool isoffTV = false;
 
 
 extern "C" {
@@ -185,6 +209,8 @@ void loop() {
   
   if (WiFiSpam){
     WiFispammer();
+  } else if (isoffTV) {
+    offTV();
   }
 }
 
@@ -415,7 +441,7 @@ void RollMenu(){
         } else if (pos == 1){
 
         } else if (pos == 2){
-
+          isoffTV = !isoffTV;
         }
       } else if (numMenu == 4) { // Pins
         // if (pos == 0){
@@ -602,3 +628,20 @@ void DrawKentaiIcon() {
   oled.update();
   oled.setScale(1);
 }
+
+
+void offTV() {
+  unsigned long currentMillisIR = millis();
+
+
+  if (currentMillisIR - previousMillisIR >= intervalIR) {
+    previousMillisIR = currentMillisIR; 
+
+    irsend.sendNEC(powerCodes[currentCodeIndex], 32);
+    currentCodeIndex++;
+    if (currentCodeIndex >= numCodes) {
+      currentCodeIndex = 0; 
+    }
+  }
+}
+
