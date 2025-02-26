@@ -5,6 +5,18 @@
 #include <nRF24L01.h>
 #include "printf.h"
 
+#include "DHT.h"
+
+#define DHTPIN 8
+
+DHT dht_22(DHTPIN, DHT22);
+
+DHT dht_11(DHTPIN, DHT11);
+
+
+
+
+
 #define CE  7
 RF24 radio(7, 8);
 
@@ -167,11 +179,28 @@ void oscill(){
 }
 
 void dht22() {
+  dht_22.begin();
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  if (isnan(h) || isnan(t)) {
+    Serial.println("Не удается считать показания");
+    return;
+  }
+
+  Serial.print("DHT22"+h+"/"+t);
 
 }
 
+
 void dht11() {
-  
+  dht_11.begin();
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  if (isnan(h) || isnan(t)) {
+    Serial.println("Не удается считать показания");
+    return;
+  }
+  Serial.print("DHT11"+h+"/"+t);
 }
 
 void pHFUNC() {
@@ -199,7 +228,7 @@ void CO2FUCN() {
 }
 
 void SoundSensorFUCN() {
-  
+
 }
 
 
@@ -276,7 +305,4 @@ void jammer() {
     radio.write( & text, sizeof(text));
   }
  }
-
-
-
 
