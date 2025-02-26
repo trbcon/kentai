@@ -2,6 +2,11 @@
 #include <GyverOLED.h>
 #include <FastLED.h>
 #include <ESP8266WiFi.h>
+#include "GyverButton.h"
+
+GButton up;
+GButton ok;
+GButton down;
 GyverOLED<SSD1306_128x64> oled;
 
 #define LED_COUNT 1
@@ -10,13 +15,27 @@ CRGB leds[LED_COUNT];
 
 int max_bright = 100;
 
-int MenusLen[] = {10, 3, 3};
-char* MainMenu[] = {"LED", "Wi-Fi", "ARGB", "4", "5", "6", "7", "8", "9", "10"};
-char* FlashlightMenu[] = {"white color", "red color", "back"};
-char* WiFiMenu[] = {"Wi-Fi spammer", "Wi-Fi scanner", "back"};
+int MenusLen[] = {11, 3, 3, 4, 4, 4, 4, 8, 4};
+char* MainMenu[] = {"LED", "Wi-Fi", "IR", "Pins", "2.4", "termo", "sensors", "NFC", "RGB", "ARGB", "RFID"};
+char* FlashlightMenu[] = {"white color", "red color", "back"}; //Flashlight white and red
+char* WiFiMenu[] = {"Wi-Fi spammer", "Wi-Fi scanner", "back"}; //WiFi
+char* IR[] = {"read", "emulate", "off device", "back"};
+char* Pins[] = {"Pin 0", "Pin 1", "Pin 2", "back"}; //Pins
+char* G2_4[] = {"2.4 jammer", "send pkg", "read pkg", "back"}; //2.4 GHz
+char* termo[] = {"DHT11", "DHT22", "ds18b20", "back"};
+char* sensors[] = {"pH", "rain sensor", "heartbit", "soil moisture", "HC-SR04", "CO2(MH-Z19b)", "Sound sensor", "back"};
+char* NFC[] = {"read", "emulate", "write", "back"};
+// char* RGB[] = {};
+// char* ARGB[] = {};
+
+
 
 bool whiteLED = false;
 bool redLED = false;
+
+bool oscilloscope = false;
+
+bool WiFiSpam = false;
 
 
 extern "C" {
@@ -32,8 +51,18 @@ const bool wpa2 = false; // WPA2 networks
 const bool appendSpaces = true; // makes all SSIDs 32 characters long to improve performance
 
 const char ssids[] PROGMEM = {
-  "Free Wi-Fi\n"
-  "FREE WIFI\n"
+  "Wi-Fi1\n"
+  "Wi-Fi2\n"
+  "Wi-Fi3\n"
+  "Wi-Fi4\n"
+  "Wi-Fi5\n"
+  "Wi-Fi6\n"
+  "Wi-Fi7\n"
+  "Wi-Fi8\n"
+  "Wi-Fi9\n"
+  "Wi-Fi10\n"
+  "Wi-Fi11\n"
+  "Wi-Fi12\n"
 };
 
 char emptySSID[32];
@@ -109,12 +138,19 @@ void setup() {
   oled.init();    
   oled.setContrast(255); 
 
+  //buttons
+  // up.setType(LOW_PULL);
+  // ok.setType(LOW_PULL);
+  // down.setType(LOW_PULL);
+
+  up.setDebounce(50);
+  ok.setDebounce(50);
+  down.setDebounce(50);
 
 
 
   for (int i = 0; i < 32; i++)
     emptySSID[i] = ' ';
-  // for random generator
   randomSeed(os_random());
   packetSize = sizeof(beaconPacket);
   if (wpa2) {
@@ -124,7 +160,10 @@ void setup() {
     packetSize -= 26;
   }
 
-  randomMac();
+  // randomMac();
+
+  DrawKentaiIcon();
+  delay(500);
 
   currentTime = millis();
 
@@ -136,12 +175,17 @@ void setup() {
 
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH); 
+
 }
 
 void loop() {
+  // PinSelectMenu(0, 1);
   // PrintMenu();
   RollMenu();
-  // WiFiSpammer();
+  
+  if (WiFiSpam){
+    WiFispammer();
+  }
 }
 
 void PrintMenu() {
@@ -182,28 +226,145 @@ void PrintMenu() {
         oled.println(WiFiMenu[i]);
       }
       break;
-  }
+    case 3:
+      if (pos == -1){
+          pos = 0;
+      } else if (pos == 4){
+          pos = 3;
+      }
+        for(int i = 0; i < 4; i++){
+          if(i == pos){
+            oled.print(">");
+          } else {
+            oled.print(" ");
+          }
+          oled.println(IR[i]);
+        }
+      break;
+    case 4:
+      if (pos == -1){
+          pos = 0;
+      } else if (pos == 4){
+          pos = 3;
+      }
+      for(int i = 0; i < 4; i++){
+          if(i == pos){
+            oled.print(">");
+          } else {
+            oled.print(" ");
+          }
+          oled.println(Pins[i]);
+        }
+      break;
+    case 5:
+      if (pos == -1){
+          pos = 0;
+      } else if (pos == 4){
+          pos = 3;
+      }
+      for(int i = 0; i < 4; i++){
+          if(i == pos){
+            oled.print(">");
+          } else {
+            oled.print(" ");
+          }
+          oled.println(G2_4[i]);
+        }
+      break;
+    case 6:
+      if (pos == -1){
+          pos = 0;
+      } else if (pos == 4){
+          pos = 3;
+      }
+      for(int i = 0; i < 4; i++){
+          if(i == pos){
+            oled.print(">");
+          } else {
+            oled.print(" ");
+          }
+          oled.println(termo[i]);
+        }
+      break;
+    case 7:
+      if (pos == -1){
+          pos = 0;
+      } else if (pos == 8){
+          pos = 7;
+      }
+      for(int i = 0; i < 8; i++){
+          if(i == pos){
+            oled.print(">");
+          } else {
+            oled.print(" ");
+          }
+          oled.println(sensors[i]);
+        }
+      break;
+    case 8:
+      if (pos == -1){
+          pos = 0;
+      } else if (pos == 4){
+          pos = 3;
+      }
+      for(int i = 0; i < 4; i++){
+          if(i == pos){
+            oled.print(">");
+          } else {
+            oled.print(" ");
+          }
+          oled.println(NFC[i]);
+        }
+      break;
+    case 9:
+      break;
+    case 10:
+      break;
+    case 11:
+      if (pos == -1){
+          pos = 0;
+      } else if (pos == 4){
+          pos = 3;
+      }
+      for(int i = 0; i < 4; i++){
+          if(i == pos){
+            oled.print(">");
+          } else {
+            oled.print(" ");
+          }
+          oled.println(NFC[i]);
+        }
+      break;
+  } 
   oled.update();
 }
 
 void RollMenu(){
+  int analog = analogRead(keysPin);
   keysValue = analogRead(keysPin);
-  if (Serial.available() || keysValue != 1024) {
+
+  up.tick(analog < 18 && analog > 0);
+  ok.tick(analog < 100 && analog > 40);
+  down.tick(analog < 150 && analog > 100);
+
+  if (Serial.available() || analog != 1024) {
     String serData = Serial.readString();
-    Serial.println(keysValue);
-    
-    if (serData == "down\n" || (keysValue > 105 && keysValue < 125)) {
+    Serial.println(analog);
+    // (keysValue > 105 && keysValue < 125) ||
+    // (keysValue > 3 && keysValue < 40) || 
+    // (keysValue > 40 && keysValue < 100) || 
+    if (serData == "down\n" || down.isPress()) {
       // Serial.print(serData);
       pos++;
       if(pos == MenusLen[numMenu]){
         pos = 0;
       }
-    } else if(serData == "up\n" || (keysValue > 3 && keysValue < 40)) {
+    } else if(serData == "up\n" || up.isPress()) {
       pos--;
       if(pos == -1){
         pos = MenusLen[numMenu] - 1;
       }
-    } else if(serData == "ok\n" || (keysValue > 50 && keysValue < 80)) {
+    } else if(serData == "ok\n" || ok.isPress()) {
       // {"LED"("white color", "red color", "back"),
       // "Wi-Fi"("Wi-Fi spammer", "Wi-Fi scanner", "back"),
       // "ARGB"(), 
@@ -214,39 +375,119 @@ void RollMenu(){
       } else if(pos == MenusLen[numMenu] - 1){
         pos = numMenu - 1;
         numMenu = 0;
-      } else if(numMenu == 1 && pos == 0){ //white led func
-        whiteLED = !whiteLED;
-        redLED = false;
-        Serial.println(whiteLED);
-        if(whiteLED) {
-          leds[0] = CRGB::White;
-          FastLED.show();
-          digitalWrite(LED_BUILTIN, LOW); 
-        } else {
-          leds[0] = CRGB::Black;
-          FastLED.show();
-          digitalWrite(LED_BUILTIN, HIGH); 
+      } else if(numMenu == 1){ //white led func
+        if (pos == 0){
+          whiteLED = !whiteLED;
+          redLED = false;
+          Serial.println(whiteLED);
+          if(whiteLED) {
+            leds[0] = CRGB::White;
+            FastLED.show();
+            digitalWrite(LED_BUILTIN, LOW); 
+          } else {
+            leds[0] = CRGB::Black;
+            FastLED.show();
+            digitalWrite(LED_BUILTIN, HIGH); 
+          }
+        } else if (pos == 1){ //red led func
+          redLED = !redLED;
+          whiteLED = false;
+          if(whiteLED) {
+            leds[0] = CRGB::Red;
+            FastLED.show();
+          } else {
+            leds[0] = CRGB::Black;
+            FastLED.show();
+          }
         }
-      } else if (numMenu == 1 && pos == 1){ //red led func
-        redLED = !redLED;
-        whiteLED = false;
-        if(whiteLED) {
-          leds[0] = CRGB::Red;
-          FastLED.show();
-        } else {
-          leds[0] = CRGB::Black;
-          FastLED.show();
+      } // wi-fi
+       else if (numMenu == 2) {
+        if (pos == 0) {
+          WiFiSpam = !WiFiSpam;
+        } else if (pos == 1){
+
         }
-      // wi-fi
-      } else if (numMenu == 2 && pos == 0) {
         
+      } // IR remote
+      else if (numMenu == 3 && pos == 0) { 
+        if (pos == 0){
+
+        } else if (pos == 1){
+
+        } else if (pos == 2){
+
+        }
+      } else if (numMenu == 4) { // Pins
+        // if (pos == 0){
+
+        // } else if (pos == 1){
+
+        // } else if (pos == 2){
+
+        // } else if (pos == 3){
+
+        // }
+
+
       }
+    } else if (serData != "") {
+      readPKG(serData);
     }
     PrintMenu();
   }  
 }
 
 
+void readPKG(String incData) {
+  if (incData.startsWith("OSC")) {
+    Serial.println("done");
+      // Разделение строки на части
+      int firstSlash = incData.indexOf('/');
+      int secondSlash = incData.indexOf('/', firstSlash + 1);
+      int thirdSlash = incData.indexOf('/', secondSlash + 1);
+
+      String XStr = incData.substring(firstSlash + 1, secondSlash);
+      String Y1Str = incData.substring(secondSlash + 1, thirdSlash);
+      String Y2Str = incData.substring(thirdSlash + 1);
+
+      // Преобразование строк в числа
+      int Xint = XStr.toInt();
+      int Y1int = Y1Str.toInt();
+      int Y2int = Y2Str.toInt();
+      draw(Xint, Y1int, Y2int);
+  }
+}
+
+void draw(int x, int y1, int y2) {
+  oled.clear();
+  if (oscilloscope){
+    oled.line(x, y1, x + 1, y2);
+  }
+  oled.update();
+}
+
+
+void PinSelectMenu(int strPinNum, int SelectedPinNum){
+  oled.clear();
+
+  for(int i = 0; i < 2; i++){
+    int startY = 26 + i * 7;
+    for(int j = 0; j < 10; j++) {
+      int startX = 30 + j * 7;
+      if(j == SelectedPinNum + 3 && i == strPinNum) {
+        oled.line(startX, startY, startX + 4, startY);
+        oled.line(startX, startY + 1, startX + 1, startY + 1); oled.line(startX + 3, startY + 1, startX + 4, startY + 1);
+        oled.line(startX, startY + 2, startX, startY + 2); oled.line(startX + 4, startY + 2, startX + 4, startY + 2);
+        oled.line(startX, startY + 3, startX + 1, startY + 3); oled.line(startX + 3, startY + 3, startX + 4, startY + 3);
+        oled.line(startX, startY + 4, startX + 4, startY + 4);
+      } else {
+        oled.line(startX + 2, startY + 1, startX + 2, startY + 3);
+        oled.line(startX + 1, startY + 2, startX + 3, startY + 2);
+      }
+    } 
+  }
+  oled.update();
+}
 
 
 void WiFispammer(){
@@ -350,4 +591,14 @@ void randomMac() {
   for (int i = 0; i < 6; i++){
      macAddr[i] = random(256);
   }
+}
+
+
+void DrawKentaiIcon() {
+  oled.clear();
+  oled.setScale(3);
+  oled.setCursor(0,0);
+  oled.print("Kentai");
+  oled.update();
+  oled.setScale(1);
 }
