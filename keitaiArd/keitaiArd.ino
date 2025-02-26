@@ -62,6 +62,20 @@ unsigned long previousMillis = 0; // таймер
 
 
 
+bool oscilograff = false;
+bool DHT22 = false;
+bool DHT11 = false;
+bool ds18b20 = false;
+bool pHmodule = false;
+bool HeartBit = false;
+bool RainSensor = false;
+bool CO2 = false;
+bool SoundSensor = false;
+
+
+
+
+
 void setup() {
   Serial.begin(9600);
 
@@ -90,14 +104,44 @@ void setup() {
 
 
 void loop() {
-  
+  if (Serial.available()) {
+    String serData = Serial.readString();
+    if (serData == "OSC"){
+      oscilograff = !oscilograff;
+    }
+  }
+
+
+
+
 
   if (jamming){
     radio.setPALevel(RF24_PA_HIGH);
     radio.setDataRate(RF24_2MBPS);
     jammer();
+  } else if (oscilograff) {
+    oscill()
+  } else if (DHT22) {
+    dht22();
+  } else if (DHT11) {
+    dht11();
+  } else if (ds18b20) {
+    DS18b20();
+  } else if (pHmodule) {
+    pHFUNC();
+  } else if (HeartBit) {
+    HeartBitFUCN();
+  } else if (RainSensor) {
+    RainSensorFUCN();
+  } else if (CO2) {
+    CO2FUCN();
+  } else if (SoundSensor) {
+    SoundSensorFUCN();
   }
 }
+
+
+
 
 void oscill(){
   unsigned long currentMillis = millis();
@@ -121,6 +165,45 @@ void oscill(){
         }
     }
 }
+
+void dht22() {
+
+}
+
+void dht11() {
+  
+}
+
+void pHFUNC() {
+
+}
+
+void DS18b20() {
+
+}
+
+void pHFUNC() {
+
+}
+
+void HeartBitFUCN() {
+
+}
+
+void RainSensorFUCN() {
+
+}
+
+void CO2FUCN() {
+
+}
+
+void SoundSensorFUCN() {
+  
+}
+
+
+
 
 
 void setRegister(byte r, byte v)
